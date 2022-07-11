@@ -1,0 +1,114 @@
+name: Sync PR-Jira
+description: |
+  Create a Jira ticket from a PR and keep its status in sync
+
+inputs:
+  jira-url:
+    description: The base URL of the Jira instance.
+    required: true
+  jira-api-token:
+    description: The API token used to authenticate to the Jira instance.
+    required: true
+  jira-user:
+    description: The Jira user used to identify actions performed on the instance.
+    required: true
+  jira-project-key:
+    description: The Jira project key under which tickets will be looked for or created.
+    required: true
+  ticket-label:
+    description: A label to apply to synchronized Jira tickets.
+    required: false
+    default: "github-sync"
+
+outputs:
+  jira-key:
+    description: The Jira issue key linked to this PR.
+    value: ${{ steps.sync.outputs.jira-key }}
+  is-new:
+    description: This is set to `true` when the Jira issue has been created in this run.
+    value: ${{ steps.sync.outputs.created }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: bash
+      run: |
+        if [[ ! ${{ github.event_name }} =~ pull_request(_target)? ]] ; then
+          echo ::error ::This actions is intended to run on pull_request or pull_request_target workflows.
+          exit 0
+        fi
+
+    - name: Sync Jira ticket
+      uses: addnab/docker-run-action@v3
+      with:
+        image: ghcr.io/ankitpokhrel/jira-cli:latest
+        options: >-
+          -e JIRA_AUTH_TYPE=bearer
+          -e JIRA_API_TOKEN=${{ inputs.jira-api-token }}
+        run: |
+          jira init \
+            --force \
+            --installation local \
+            --server "${{ inputs.jira-url }}" \
+            --login "${{ inputs.jira-user }}" \
+            --project "${{ inputs.jira-project-key }}" \
+            --board None
+
+          body=$(cat <<'EOF'
+          ${{ github.event.pull_request.body }}
+          EOF
+          )
+
+          created=""
+          # Without `project is not EMPTY` jira-cli would limit results to the default project
+          #  Tickets are allowed to be moved to support multi-project repositories.
+          key=$(jira issue list \
+            --plain --no-headers --no-truncate --columns KEY --paginate 1 \
+            --resolution Unresolved \
+            --jql "project is not EMPTY AND github-url = '${{ github.event.pull_request.html_url }}'" || true)
+          echo "Found jira ticket: $key"
+
+          create_jira_ticket()
+          {
+            created=$(jira issue create --no-input \
+              --type Task \
+              --label "${{ inputs.ticket-label }}" \
+              --custom "github-url=${{ github.event.pull_request.html_url }}" \
+              --summary "${{ github.event.pull_request.title }}" \
+              --body "$body" \
+            )
+
+            key=$(echo "$created" | grep -Eo "/browse/[^ >]+" | head -1 | rev | cut -d/ -f1 | rev)
+            echo "Created jira ticket: $key"
+          }
+
+          if [ "${{ github.event.action }}" = "closed" ] ; then
+            if ${{ github.event.pull_request.merged == true }} ; then
+              if [ -z "$key" ] ; then  # Can happen with PRs created before the introduction of our sync action
+                create_jira_ticket
+              fi
+
+              jira issue transition "$key" Done
+            elif [ ! -z "$key" ] ; then
+              jira issue delete "$key" --cascade
+            fi
+          elif [ -z "$key" ] ; then
+            create_jira_ticket
+          else
+            jira issue edit "$key" \
+              --no-input \
+              --summary "${{ github.event.pull_request.title }}" \
+              --body "$body"
+          fi
+
+          echo "::set-output name=jira-key::$key"
+          echo "::set-output name=created::$([ -z "$created" ] && echo "false" || echo "true")"
+
+    - name: Post Jira URL as comment
+      uses: peter-evans/create-or-update-comment@v2
+      if: ${{ steps.sync.outputs.created == 'true' }}
+      with:
+        issue-number: ${{ github.event.number }}
+        body: |
+          The Jira ticket [${{ steps.sync.outputs.jira-key }}](${{ inputs.JIRA_URL }}/browse/${{ steps.sync.outputs.jira-key }}) has been linked to this PR.
