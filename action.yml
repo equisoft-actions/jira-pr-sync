@@ -22,7 +22,7 @@ inputs:
   ticket-type:
     description: The type of ticket to create on Jira. Defaults to `Task`.
     required: false
-    default: "task"
+    default: "Task"
 
 outputs:
   jira-key:
