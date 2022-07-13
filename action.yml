@@ -19,6 +19,10 @@ inputs:
     description: A label to apply to synchronized Jira tickets.
     required: false
     default: "github-sync"
+  ticket-type:
+    description: The type of ticket to create on Jira. Defaults to `Task`.
+    required: false
+    default: "Task"
 
 outputs:
   jira-key:
@@ -72,7 +76,7 @@ runs:
           create_jira_ticket()
           {
             created=$(jira issue create --no-input \
-              --type Task \
+              --type ${{ inputs.ticket-type }} \
               --label "${{ inputs.ticket-label }}" \
               --custom "github-url=${{ github.event.pull_request.html_url }}" \
               --summary "${{ github.event.pull_request.title }}" \
