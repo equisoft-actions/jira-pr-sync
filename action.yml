@@ -45,6 +45,7 @@ runs:
 
     - name: Sync Jira ticket
       uses: addnab/docker-run-action@v3
+      id: sync
       with:
         image: ghcr.io/ankitpokhrel/jira-cli:latest
         options: >-
