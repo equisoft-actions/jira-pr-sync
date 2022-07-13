@@ -63,6 +63,7 @@ runs:
           ${{ github.event.pull_request.body }}
           EOF
           )
+          body=${body:0:32767}
 
           created=""
           # Without `project is not EMPTY` jira-cli would limit results to the default project
