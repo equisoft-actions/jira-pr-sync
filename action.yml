@@ -76,7 +76,7 @@ runs:
           create_jira_ticket()
           {
             created=$(jira issue create --no-input \
-              --type ${{ inputs.ticket-type }} \
+              --type "${{ inputs.ticket-type }}" \
               --label "${{ inputs.ticket-label }}" \
               --custom "github-url=${{ github.event.pull_request.html_url }}" \
               --summary "${{ github.event.pull_request.title }}" \
