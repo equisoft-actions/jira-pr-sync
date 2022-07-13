@@ -63,7 +63,7 @@ runs:
           ${{ github.event.pull_request.body }}
           EOF
           )
-          body="${body:0:32766}"
+          body="${body:0:32000}"  # Jira descriptions are limited to 32767 characters
 
           created=""
           # Without `project is not EMPTY` jira-cli would limit results to the default project
