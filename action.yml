@@ -117,4 +117,4 @@ runs:
       with:
         issue-number: ${{ github.event.number }}
         body: |
-          The Jira ticket [${{ steps.sync.outputs.jira-key }}](${{ inputs.JIRA_URL }}/browse/${{ steps.sync.outputs.jira-key }}) has been linked to this PR.
+          The Jira ticket [${{ steps.sync.outputs.jira-key }}](${{ inputs.jira-url }}/browse/${{ steps.sync.outputs.jira-key }}) has been linked to this PR.
