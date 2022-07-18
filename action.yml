@@ -60,6 +60,10 @@ runs:
             --project "${{ inputs.jira-project-key }}" \
             --board None
 
+          summary=$(cat <<'EOF'
+          [${{ github.event.repository.name }}] ${{ github.event.pull_request.title }}
+          EOF
+          )
           body=$(cat <<'EOF'
           ${{ github.event.pull_request.body }}
           EOF
@@ -81,7 +85,7 @@ runs:
               --type "${{ inputs.ticket-type }}" \
               --label "${{ inputs.ticket-label }}" \
               --custom "github-url=${{ github.event.pull_request.html_url }}" \
-              --summary "${{ github.event.pull_request.title }}" \
+              --summary "$summary" \
               --body "$body" \
             )
 
@@ -104,7 +108,7 @@ runs:
           else
             jira issue edit "$key" \
               --no-input \
-              --summary "${{ github.event.pull_request.title }}" \
+              --summary "$summary" \
               --body "$body"
           fi
 
