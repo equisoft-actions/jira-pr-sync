@@ -23,6 +23,10 @@ inputs:
     description: The type of ticket to create on Jira. Defaults to `Task`.
     required: false
     default: "Task"
+  jira-transition-resolve:
+    description: Name of the transition to resolve a ticket
+    required : false
+    default: "Done"
 
 outputs:
   jira-key:
@@ -99,7 +103,7 @@ runs:
                 create_jira_ticket
               fi
 
-              jira issue transition "$key" Done
+              jira issue transition "$key" "${{ inputs.jira-transition-resolve }}"
             elif [ ! -z "$key" ] ; then
               jira issue delete "$key" --cascade
             fi
