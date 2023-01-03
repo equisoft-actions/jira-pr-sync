@@ -116,8 +116,8 @@ runs:
               --body "$body"
           fi
 
-          echo "::set-output name=jira-key::$key"
-          echo "::set-output name=created::$([ -z "$created" ] && echo "false" || echo "true")"
+          echo "jira-key=$key" >> $GITHUB_OUTPUT
+          echo "created=$([ -z "$created" ] && echo "false" || echo "true")" >> $GITHUB_OUTPUT
 
     - name: Post Jira URL as comment
       uses: peter-evans/create-or-update-comment@v2
