@@ -120,7 +120,7 @@ runs:
           echo "created=$([ -z "$created" ] && echo "false" || echo "true")" >> $GITHUB_OUTPUT
 
     - name: Post Jira URL as comment
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@v4
       if: ${{ steps.sync.outputs.created == 'true' }}
       with:
         issue-number: ${{ github.event.number }}
