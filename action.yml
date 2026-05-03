@@ -48,7 +48,7 @@ runs:
         fi
 
     - name: Sync Jira ticket
-      uses: addnab/docker-run-action@v3
+      uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
       id: sync
       with:
         image: ghcr.io/ankitpokhrel/jira-cli:latest
@@ -120,7 +120,7 @@ runs:
           echo "created=$([ -z "$created" ] && echo "false" || echo "true")" >> $GITHUB_OUTPUT
 
     - name: Post Jira URL as comment
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@67dcc547d311b736a8e6c5c236542148a47adc3d # v2
       if: ${{ steps.sync.outputs.created == 'true' }}
       with:
         issue-number: ${{ github.event.number }}
